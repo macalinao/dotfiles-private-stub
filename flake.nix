@@ -3,10 +3,18 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    flake-parts.url = "github:hercules-ci/flake-parts";
-    flake-parts.inputs.nixpkgs-lib.follows = "nixpkgs";
-    treefmt-nix.url = "github:numtide/treefmt-nix";
-    treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
+    flake-parts = {
+      url = "github:hercules-ci/flake-parts";
+      inputs.nixpkgs-lib.follows = "nixpkgs";
+    };
+    treefmt-nix = {
+      url = "github:numtide/treefmt-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    git-hooks-nix = {
+      url = "github:cachix/git-hooks.nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -19,9 +27,20 @@
   };
 
   outputs = _: {
-    homeModules.default = { };
-    nixosModules.default = { };
-    nixosModules.hosts = { };
-    darwinModules.default = { };
+    homeModules = {
+      default = { };
+    };
+    darwinModules = {
+      default = { };
+    };
+    nixosModules = {
+      default = { };
+      hosts = { };
+      devbox = { };
+    };
+    overlays = {
+      factorio = _: _: { };
+    };
+    lib = { };
   };
 }
