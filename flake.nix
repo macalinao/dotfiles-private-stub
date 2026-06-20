@@ -26,21 +26,60 @@
     };
   };
 
-  outputs = _: {
-    homeModules = {
-      default = { };
+  outputs =
+    { nixpkgs, ... }:
+    let
+      lib = nixpkgs.lib;
+
+      # No-op declarations for the `dotfiles-private.*` options that the real
+      # private repo's home module defines. Consumers (e.g. ~/configuration)
+      # set these unconditionally, so the stub must declare them or evaluation
+      # fails with "The option `dotfiles-private' does not exist". The values
+      # are ignored — this stub intentionally produces no config.
+      stubHomeModule = {
+        options.dotfiles-private = {
+          identity = lib.mkOption {
+            type = lib.types.str;
+            default = "igm";
+            description = "Identity preset name (no-op in the stub).";
+          };
+          managarr.enable = lib.mkEnableOption "managarr (no-op in the stub)";
+        };
+      };
+
+      # The real private repo's `nixosModules.devbox` declares a handful of
+      # ragenix secrets that ~/configuration reads (Caddy DNS/tunnel tokens,
+      # the Immich backup creds, etc.). Mirror those declarations so the devbox
+      # NixOS config evaluates against the stub — each points at a placeholder
+      # file that is never actually decrypted (the stub is eval-only).
+      stubSecrets = [
+        "pilipili-cloudflared-tunnel"
+        "pilipili-cloudflare-dns-token"
+        "pilipili-tailscale-authkey"
+        "igm-immich-api-key"
+        "rclone-immich-backup"
+      ];
+      stubDevboxModule = {
+        age.secrets = lib.genAttrs stubSecrets (_: {
+          file = ./dummy-secret.age;
+        });
+      };
+    in
+    {
+      homeModules = {
+        default = stubHomeModule;
+      };
+      darwinModules = {
+        default = { };
+      };
+      nixosModules = {
+        default = { };
+        hosts = { };
+        devbox = stubDevboxModule;
+      };
+      overlays = {
+        factorio = _: _: { };
+      };
+      lib = { };
     };
-    darwinModules = {
-      default = { };
-    };
-    nixosModules = {
-      default = { };
-      hosts = { };
-      devbox = { };
-    };
-    overlays = {
-      factorio = _: _: { };
-    };
-    lib = { };
-  };
 }
